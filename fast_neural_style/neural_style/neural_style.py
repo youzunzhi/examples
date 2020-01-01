@@ -11,6 +11,8 @@ from torch.utils.data import DataLoader
 from torchvision import datasets
 from torchvision import transforms
 import torch.onnx
+from PIL import ImageFile
+ImageFile.LOAD_TRUNCATED_IMAGES = True
 
 import utils
 from transformer_net import TransformerNet
