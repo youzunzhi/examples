@@ -178,10 +178,10 @@ def main():
                                   help="number of training epochs, default is 2")
     train_arg_parser.add_argument("--batch-size", type=int, default=4,
                                   help="batch size for training, default is 4")
-    train_arg_parser.add_argument("--dataset", type=str, required=True, default='/Users/youzunzhi/pro/datasets/coco/images/',
+    train_arg_parser.add_argument("--dataset", type=str, required=True,
                                   help="path to training dataset, the path should point to a folder "
                                        "containing another folder with all the training images")
-    train_arg_parser.add_argument("--style-image", type=str, default="images/style-images/mosaic.jpg",
+    train_arg_parser.add_argument("--style-image", type=str, default="../images/style-images/mosaic.jpg",
                                   help="path to style-image")
     train_arg_parser.add_argument("--save-model-dir", type=str, required=True,
                                   help="path to folder where trained model will be saved.")
