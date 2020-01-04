@@ -119,7 +119,6 @@ def train(args):
                 ckpt_model_path = os.path.join(args.checkpoint_model_dir, ckpt_model_filename)
                 torch.save(transformer.state_dict(), ckpt_model_path)
                 transformer.to(device).train()
-            break
 
     # save model
     transformer.eval().cpu()
@@ -129,7 +128,7 @@ def train(args):
     time_str = (datetime.datetime.now() + datetime.timedelta(hours=8)).strftime('%m%d%H%M%S')
     style_name = (args.style_image.split('/')[-1]).split('.')[0]
     save_model_filename = f'e_{args.epochs}_{time_str}_{args.content_weight:.0e}_{args.style_weight:.0e}_' \
-                          f'{args.content_layer}_{args.style_layer}_{style_name}.model'
+                          f'{args.backbone}_{args.content_layer}_{args.style_layer}_{style_name}.model'
     save_model_path = os.path.join(args.save_model_dir, save_model_filename)
     torch.save(transformer.state_dict(), save_model_path)
 
@@ -216,10 +215,11 @@ def main():
                                   help="weight for content-loss, default is 1e5")
     train_arg_parser.add_argument("--style-weight", type=float, default=1e10,
                                   help="weight for style-loss, default is 1e10")
-    train_arg_parser.add_argument("--content-layer", type=str, default='2_2',
-                                  help="content-layer choice")
-    train_arg_parser.add_argument("--style-layer", type=str, default='all',
-                                  help="style-layer choice")
+
+    train_arg_parser.add_argument("--backbone", type=str, default='vgg', help="backbone choice")
+    train_arg_parser.add_argument("--content-layer", type=str, default='2_2', help="content-layer choice")
+    train_arg_parser.add_argument("--style-layer", type=str, default='all', help="style-layer choice")
+
     train_arg_parser.add_argument("--lr", type=float, default=1e-3,
                                   help="learning rate, default is 1e-3")
     train_arg_parser.add_argument("--log-interval", type=int, default=500,
