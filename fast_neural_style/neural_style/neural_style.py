@@ -1,7 +1,7 @@
 import argparse
 import os
 import sys
-import time
+import time, datetime
 import re
 
 import numpy as np
@@ -80,7 +80,16 @@ def train(args):
             features_y = vgg(y)
             features_x = vgg(x)
 
-            content_loss = args.content_weight * mse_loss(features_y.relu3_3, features_x.relu3_3)
+            if args.content_layer == '1_2':
+                content_loss = args.content_weight * mse_loss(features_y.relu1_2, features_x.relu1_2)
+            elif args.content_layer == '2_2':
+                content_loss = args.content_weight * mse_loss(features_y.relu2_2, features_x.relu2_2)
+            elif args.content_layer == '3_3':
+                content_loss = args.content_weight * mse_loss(features_y.relu3_3, features_x.relu3_3)
+            elif args.content_layer == '4_3':
+                content_loss = args.content_weight * mse_loss(features_y.relu4_3, features_x.relu4_3)
+            else:
+                raise NotImplementedError
 
             style_loss = 0.
             for ft_y, gm_s in zip(features_y, gram_style):
@@ -110,11 +119,17 @@ def train(args):
                 ckpt_model_path = os.path.join(args.checkpoint_model_dir, ckpt_model_filename)
                 torch.save(transformer.state_dict(), ckpt_model_path)
                 transformer.to(device).train()
+            break
 
     # save model
     transformer.eval().cpu()
-    save_model_filename = "epoch_" + str(args.epochs) + "_" + str(time.ctime()).replace(' ', '_') + "_" + str(
-        args.content_weight) + "_" + str(args.style_weight) + ".model"
+    # save_model_filename = "epoch_" + str(args.epochs) + "_" + str(time.ctime()).replace(' ', '_') + "_" + str(
+    #     args.content_weight) + "_" + str(args.style_weight) + ".model"
+
+    time_str = (datetime.datetime.now() + datetime.timedelta(hours=8)).strftime('%m%d%H%M%S')
+    style_name = (args.style_image.split('/')[-1]).split('.')[0]
+    save_model_filename = f'e_{args.epochs}_{time_str}_{args.content_weight:.0e}_{args.style_weight:.0e}_' \
+                          f'{args.content_layer}_{args.style_layer}_{style_name}.model'
     save_model_path = os.path.join(args.save_model_dir, save_model_filename)
     torch.save(transformer.state_dict(), save_model_path)
 
@@ -183,7 +198,7 @@ def main():
     train_arg_parser.add_argument("--dataset", type=str, required=True,
                                   help="path to training dataset, the path should point to a folder "
                                        "containing another folder with all the training images")
-    train_arg_parser.add_argument("--style-image", type=str, default="../images/style-images/mosaic.jpg",
+    train_arg_parser.add_argument("--style-image", type=str, default="../images/style-images/rick-and-morty.jpg",
                                   help="path to style-image")
     train_arg_parser.add_argument("--save-model-dir", type=str, required=True,
                                   help="path to folder where trained model will be saved.")
@@ -201,6 +216,10 @@ def main():
                                   help="weight for content-loss, default is 1e5")
     train_arg_parser.add_argument("--style-weight", type=float, default=1e10,
                                   help="weight for style-loss, default is 1e10")
+    train_arg_parser.add_argument("--content-layer", type=str, default='2_2',
+                                  help="content-layer choice")
+    train_arg_parser.add_argument("--style-layer", type=str, default='all',
+                                  help="style-layer choice")
     train_arg_parser.add_argument("--lr", type=float, default=1e-3,
                                   help="learning rate, default is 1e-3")
     train_arg_parser.add_argument("--log-interval", type=int, default=500,
