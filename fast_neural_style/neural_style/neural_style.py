@@ -17,6 +17,7 @@ ImageFile.LOAD_TRUNCATED_IMAGES = True
 import utils
 from transformer_net import TransformerNet
 from vgg import Vgg16
+from resnet import ResNet18
 
 
 def check_paths(args):
@@ -48,8 +49,12 @@ def train(args):
     transformer = TransformerNet().to(device)
     optimizer = Adam(transformer.parameters(), args.lr)
     mse_loss = torch.nn.MSELoss()
-
-    vgg = Vgg16(requires_grad=False).to(device)
+    if args.loss_network == 'vgg':
+        loss_network = Vgg16(requires_grad=False).to(device)
+    elif args.loss_network == 'resnet':
+        loss_network = ResNet18(requires_grad=False).to(device)
+    else:
+        raise NotImplementedError
     style_transform = transforms.Compose([
         transforms.ToTensor(),
         transforms.Lambda(lambda x: x.mul(255))
@@ -58,7 +63,7 @@ def train(args):
     style = style_transform(style)
     style = style.repeat(args.batch_size, 1, 1, 1).to(device)
 
-    features_style = vgg(utils.normalize_batch(style))
+    features_style = loss_network(utils.normalize_batch(style))
     gram_style = [utils.gram_matrix(y) for y in features_style]
 
     for e in range(args.epochs):
@@ -77,19 +82,30 @@ def train(args):
             y = utils.normalize_batch(y)
             x = utils.normalize_batch(x)
 
-            features_y = vgg(y)
-            features_x = vgg(x)
-
-            if args.content_layer == '1_2':
-                content_loss = args.content_weight * mse_loss(features_y.relu1_2, features_x.relu1_2)
-            elif args.content_layer == '2_2':
-                content_loss = args.content_weight * mse_loss(features_y.relu2_2, features_x.relu2_2)
-            elif args.content_layer == '3_3':
-                content_loss = args.content_weight * mse_loss(features_y.relu3_3, features_x.relu3_3)
-            elif args.content_layer == '4_3':
-                content_loss = args.content_weight * mse_loss(features_y.relu4_3, features_x.relu4_3)
-            else:
-                raise NotImplementedError
+            features_y = loss_network(y)
+            features_x = loss_network(x)
+            if args.loss_network == 'vgg':
+                if args.content_layer == '1_2':
+                    content_loss = args.content_weight * mse_loss(features_y.relu1_2, features_x.relu1_2)
+                elif args.content_layer == '2_2':
+                    content_loss = args.content_weight * mse_loss(features_y.relu2_2, features_x.relu2_2)
+                elif args.content_layer == '3_3':
+                    content_loss = args.content_weight * mse_loss(features_y.relu3_3, features_x.relu3_3)
+                elif args.content_layer == '4_3':
+                    content_loss = args.content_weight * mse_loss(features_y.relu4_3, features_x.relu4_3)
+                else:
+                    raise NotImplementedError
+            elif args.loss_network == 'resnet':
+                if args.content_layer == 'layer1':
+                    content_loss = args.content_weight * mse_loss(features_y.layer1, features_x.layer1)
+                elif args.content_layer == 'layer2':
+                    content_loss = args.content_weight * mse_loss(features_y.layer2, features_x.layer2)
+                elif args.content_layer == 'layer3':
+                    content_loss = args.content_weight * mse_loss(features_y.layer3, features_x.layer3)
+                elif args.content_layer == 'layer4':
+                    content_loss = args.content_weight * mse_loss(features_y.layer4, features_x.layer4)
+                else:
+                    raise NotImplementedError
 
             style_loss = 0.
             for ft_y, gm_s in zip(features_y, gram_style):
@@ -128,7 +144,7 @@ def train(args):
     time_str = (datetime.datetime.now() + datetime.timedelta(hours=8)).strftime('%m%d%H%M%S')
     style_name = (args.style_image.split('/')[-1]).split('.')[0]
     save_model_filename = f'e_{args.epochs}_{time_str}_{args.content_weight:.0e}_{args.style_weight:.0e}_' \
-                          f'{args.backbone}_{args.content_layer}_{args.style_layer}_{style_name}.model'
+                          f'{args.loss_network}_{args.content_layer}_{args.style_layer}_{style_name}.model'
     save_model_path = os.path.join(args.save_model_dir, save_model_filename)
     torch.save(transformer.state_dict(), save_model_path)
 
@@ -216,7 +232,7 @@ def main():
     train_arg_parser.add_argument("--style-weight", type=float, default=1e10,
                                   help="weight for style-loss, default is 1e10")
 
-    train_arg_parser.add_argument("--backbone", type=str, default='vgg', help="backbone choice")
+    train_arg_parser.add_argument("--loss_network", type=str, default='vgg', help="loss_network choice")
     train_arg_parser.add_argument("--content-layer", type=str, default='2_2', help="content-layer choice")
     train_arg_parser.add_argument("--style-layer", type=str, default='all', help="style-layer choice")
 
