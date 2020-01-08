@@ -86,7 +86,7 @@ def train(args):
 
             features_y = loss_network(y)
             features_x = loss_network(x)
-            if args.loss_network == 'vgg':
+            if args.loss_network == 'vgg' or 'vgg_bn':
                 if args.content_layer == '1_2':
                     content_loss = args.content_weight * mse_loss(features_y.relu1_2, features_x.relu1_2)
                 elif args.content_layer == '2_2':
@@ -108,6 +108,8 @@ def train(args):
                     content_loss = args.content_weight * mse_loss(features_y.layer4, features_x.layer4)
                 else:
                     raise NotImplementedError
+            else:
+                raise NotImplementedError
 
             style_loss = 0.
             for ft_y, gm_s in zip(features_y, gram_style):
