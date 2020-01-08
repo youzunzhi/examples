@@ -154,6 +154,7 @@ def train(args):
 
         save_model_path = os.path.join(args.save_model_dir, save_model_filename)
         torch.save(transformer.state_dict(), save_model_path)
+        transformer.to(device).train()
 
         print("\nDone, trained model saved at", save_model_path)
 
