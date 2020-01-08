@@ -118,7 +118,7 @@ def train(args):
 
             style_loss = 0.
 
-            for i, ft_y, gm_s in enumerate(zip(features_y, gram_style)):
+            for i, (ft_y, gm_s) in enumerate(zip(features_y, gram_style)):
                 if args.loss_network == 'vgg' or 'vgg_bn':
                     if args.style_layer == 'all' or args.style_layer.find(str(i+1))!=-1:
                         gm_y = utils.gram_matrix(ft_y)
