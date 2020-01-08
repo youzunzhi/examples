@@ -117,9 +117,12 @@ def train(args):
                 raise NotImplementedError
 
             style_loss = 0.
-            for ft_y, gm_s in zip(features_y, gram_style):
-                gm_y = utils.gram_matrix(ft_y)
-                style_loss += mse_loss(gm_y, gm_s[:n_batch, :, :])
+
+            for i, ft_y, gm_s in enumerate(zip(features_y, gram_style)):
+                if args.loss_network == 'vgg' or 'vgg_bn':
+                    if args.style_layer == 'all' or args.style_layer.find(str(i+1))!=-1:
+                        gm_y = utils.gram_matrix(ft_y)
+                        style_loss += mse_loss(gm_y, gm_s[:n_batch, :, :])
             style_loss *= args.style_weight
 
             total_loss = content_loss + style_loss
