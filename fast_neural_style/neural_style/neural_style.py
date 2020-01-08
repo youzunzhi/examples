@@ -91,7 +91,7 @@ def train(args):
 
             features_y = loss_network(y)
             features_x = loss_network(x)
-            if args.loss_network == 'vgg' or 'vgg_bn':
+            if args.loss_network == 'vgg' or args.loss_network == 'vgg_bn':
                 if args.content_layer == '1_2':
                     content_loss = args.content_weight * mse_loss(features_y.relu1_2, features_x.relu1_2)
                 elif args.content_layer == '2_2':
