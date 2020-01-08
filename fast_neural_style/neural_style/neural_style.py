@@ -36,6 +36,10 @@ def train(args):
 
     np.random.seed(args.seed)
     torch.manual_seed(args.seed)
+    time_str = (datetime.datetime.now() + datetime.timedelta(hours=8)).strftime('%m%d%H%M%S')
+    style_name = (args.style_image.split('/')[-1]).split('.')[0]
+    save_model_filename = f'{time_str}_{args.content_weight:.0e}_{args.style_weight:.0e}_' \
+                          f'{args.loss_network}_{args.content_layer}_{args.style_layer}_{style_name}.model'
 
     transform = transforms.Compose([
         transforms.Resize(args.image_size),
@@ -135,7 +139,8 @@ def train(args):
 
             if args.checkpoint_model_dir is not None and (batch_id + 1) % args.checkpoint_interval == 0:
                 transformer.eval().cpu()
-                ckpt_model_filename = "ckpt_epoch_" + str(e) + "_batch_id_" + str(batch_id + 1) + ".pth"
+                # ckpt_model_filename = "ckpt_epoch_" + str(e) + "_batch_id_" + str(batch_id + 1) + ".pth"
+                ckpt_model_filename = f'e_{e+1}_b_{batch_id+1}_{save_model_filename}'
                 ckpt_model_path = os.path.join(args.checkpoint_model_dir, ckpt_model_filename)
                 torch.save(transformer.state_dict(), ckpt_model_path)
                 transformer.to(device).train()
@@ -143,10 +148,6 @@ def train(args):
         # save model
         transformer.eval().cpu()
 
-        time_str = (datetime.datetime.now() + datetime.timedelta(hours=8)).strftime('%m%d%H%M%S')
-        style_name = (args.style_image.split('/')[-1]).split('.')[0]
-        save_model_filename = f'e_{args.epochs}_{time_str}_{args.content_weight:.0e}_{args.style_weight:.0e}_' \
-                              f'{args.loss_network}_{args.content_layer}_{args.style_layer}_{style_name}.model'
         save_model_path = os.path.join(args.save_model_dir, save_model_filename)
         torch.save(transformer.state_dict(), save_model_path)
 
@@ -219,7 +220,7 @@ def main():
                                   help="path to style-image")
     train_arg_parser.add_argument("--save-model-dir", type=str, required=True,
                                   help="path to folder where trained model will be saved.")
-    train_arg_parser.add_argument("--checkpoint-model-dir", type=str, default=None,
+    train_arg_parser.add_argument("--checkpoint-model-dir", type=str, default='runs/',
                                   help="path to folder where checkpoints of trained models will be saved")
     train_arg_parser.add_argument("--image-size", type=int, default=256,
                                   help="size of training images, default is 256 X 256")
