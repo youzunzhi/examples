@@ -38,6 +38,7 @@ def train(args):
     torch.manual_seed(args.seed)
     time_str = (datetime.datetime.now() + datetime.timedelta(hours=8)).strftime('%m%d%H%M%S')
     style_name = (args.style_image.split('/')[-1]).split('.')[0]
+    print('what?')
     save_model_filename = f'{time_str}_{args.content_weight:.0e}_{args.style_weight:.0e}_' \
                           f'{args.loss_network}_{args.content_layer}_{args.style_layer}_{style_name}.model'
 
