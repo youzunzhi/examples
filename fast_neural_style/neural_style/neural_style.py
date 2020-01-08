@@ -16,7 +16,7 @@ ImageFile.LOAD_TRUNCATED_IMAGES = True
 
 import utils
 from transformer_net import TransformerNet
-from vgg import Vgg16
+from vgg import Vgg16, Vgg16_BN
 from resnet import ResNet18
 
 
@@ -51,6 +51,8 @@ def train(args):
     mse_loss = torch.nn.MSELoss()
     if args.loss_network == 'vgg':
         loss_network = Vgg16(requires_grad=False).to(device)
+    elif args.loss_network == 'vgg_bn':
+        loss_network = Vgg16_BN(requires_grad=False).to(device)
     elif args.loss_network == 'resnet':
         loss_network = ResNet18(requires_grad=False).to(device)
     else:
@@ -136,19 +138,17 @@ def train(args):
                 torch.save(transformer.state_dict(), ckpt_model_path)
                 transformer.to(device).train()
 
-    # save model
-    transformer.eval().cpu()
-    # save_model_filename = "epoch_" + str(args.epochs) + "_" + str(time.ctime()).replace(' ', '_') + "_" + str(
-    #     args.content_weight) + "_" + str(args.style_weight) + ".model"
+        # save model
+        transformer.eval().cpu()
 
-    time_str = (datetime.datetime.now() + datetime.timedelta(hours=8)).strftime('%m%d%H%M%S')
-    style_name = (args.style_image.split('/')[-1]).split('.')[0]
-    save_model_filename = f'e_{args.epochs}_{time_str}_{args.content_weight:.0e}_{args.style_weight:.0e}_' \
-                          f'{args.loss_network}_{args.content_layer}_{args.style_layer}_{style_name}.model'
-    save_model_path = os.path.join(args.save_model_dir, save_model_filename)
-    torch.save(transformer.state_dict(), save_model_path)
+        time_str = (datetime.datetime.now() + datetime.timedelta(hours=8)).strftime('%m%d%H%M%S')
+        style_name = (args.style_image.split('/')[-1]).split('.')[0]
+        save_model_filename = f'e_{args.epochs}_{time_str}_{args.content_weight:.0e}_{args.style_weight:.0e}_' \
+                              f'{args.loss_network}_{args.content_layer}_{args.style_layer}_{style_name}.model'
+        save_model_path = os.path.join(args.save_model_dir, save_model_filename)
+        torch.save(transformer.state_dict(), save_model_path)
 
-    print("\nDone, trained model saved at", save_model_path)
+        print("\nDone, trained model saved at", save_model_path)
 
 
 def stylize(args):
